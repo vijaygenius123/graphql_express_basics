@@ -4,7 +4,7 @@ const {GraphQLSchema, GraphQLObjectType, GraphQLInt, GraphQLNonNull, GraphQLStri
 
 const {books, authors} = require('./data/data')
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 const app = express();
 
 const AuthorType = new GraphQLObjectType({
@@ -13,6 +13,12 @@ const AuthorType = new GraphQLObjectType({
     fields: () => ({
         id: {type: GraphQLNonNull(GraphQLInt)},
         name: {type: GraphQLNonNull(GraphQLString)},
+        books: {
+            type: GraphQLList(BookType),
+            resolve: (author) => {
+                return books.filter(book => book.authorId === author.id)
+            }
+        }
     })
 })
 
@@ -26,7 +32,7 @@ const BookType = new GraphQLObjectType({
         author: {
             type: AuthorType,
             resolve: (parent) => {
-                return authors.find(author => author.id === parent.id)
+                return authors.find(author => author.id === parent.authorId)
             }
         }
     }),
@@ -40,6 +46,11 @@ const RootQueryType = new GraphQLObjectType({
             type: new GraphQLList(BookType),
             description: "List of all books",
             resolve: () => books
+        },
+        authors: {
+            type: new GraphQLList(AuthorType),
+            description: "List of all authors",
+            resolve: () => authors
         }
     })
 })
